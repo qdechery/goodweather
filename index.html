@@ -1,0 +1,316 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>Q Weather</title>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="apple-touch-icon" href="images/icon.png"/>  
+	<meta name="apple-mobile-web-app-capable" content="yes" />  
+
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css" />
+	
+	<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script src="https://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="css/stylesheet.css">
+
+	<script type="text/javascript">
+
+		// function getLocation() {
+		//     if (navigator.geolocation) {
+		//         navigator.geolocation.getCurrentPosition(showPosition);
+		// 	}
+		// };
+		
+		var icons = {	"clear-day" : "B",
+						"clear-night" : "C",
+						"rain" : "R",
+						"snow" : "G",
+						"sleet" : "X",
+						"wind" : "S",
+						"fog" : "N",
+						"cloudy" : "Y",
+						"partly-cloudy-day" : "H",
+						"partly-cloudy-night" : "I"
+					};
+		// function cities(position) {
+			var cities = {	
+						"new york" 		: 	{coords: {latitude: 40.672060, longitude:-73.983898}},
+						"los angeles" 	: 	{coords: {latitude: 34.101422, longitude: -118.341224}},
+						"chicago" 		: 	{coords: {latitude: 41.879003, longitude: -87.63675}},
+						"san francisco" : 	{coords: {latitude: 37.788531, longitude: -122.407237}},
+						"miami" 		:	{coords: {latitude: 25.790176, longitude: -80.140133}},
+						"seattle" 		:	{coords: {latitude: 47.569357, longitude: -122.286135}},
+						"minneapolis"	: 	{coords: {latitude: 44.837803, longitude: -93.351076}},
+						"current location" : ""
+					 };
+		
+		// }
+		//Get Geo Location
+
+
+		// function showPosition(position) {
+		//     var latlon = position.coords.latitude + "," + position.coords.longitude;
+
+		    // var img_url = "http://maps.googleapis.com/maps/api/staticmap?center=
+		    // "+latlon+"&zoom=10&size=400x300&sensor=false";
+
+		    // document.getElementById("mapholder").innerHTML = "<iframe src='"+img_url+"'>";
+		// }
+
+		//Getting AJAX call for json and returning a buncha shit
+		function loadWeather(cityCoords) {
+
+			// console.log(cityCoords);
+
+			var latlng = cityCoords.coords.latitude + "," + cityCoords.coords.longitude;
+
+			var forecastURL = "https://api.forecast.io/forecast/3526b4c57c825200a78605eed2a097f1/"+latlng;
+
+			$.ajax({
+				url: forecastURL,
+				jsonpCallback: 'jsonCallback',
+				contentType: "application/json",
+				dataType: 'jsonp',
+				success: function(json) {
+					// console.log(json);
+					$("#current_temp").html('&nbsp' + Math.round(json.currently.apparentTemperature)+ '&#176;F');
+					$("#current_summary").html(json.currently.summary);
+					$("#current_temp").attr("data-icon",icons[json.currently.icon]);
+					$('#celc_temp').html('('+Math.round(((json.currently.apparentTemperature - 32)*(5/9)))+ '&#176;C)');
+					
+					//current time display
+					var now = new Date(),
+						day = now.getDate(),
+						weekdays = { 0:'Sunday', 1:'Monday', 2:'Tuesday', 3:'Wednesday', 4:'Thursday', 5:'Friday', 6:'Saturday' },
+						weekday = weekdays[now.getDay()],
+						months = { 0:'Jan.', 1:'Feb.', 2:'Mar.', 3:'Apr.', 4:'May', 5:'Jun.', 6:'Jul.', 7:'Aug.', 8:'Sep.', 9:'Oct.', 10:'Nov.', 11:'Dec.' },
+						month = months[now.getMonth()],
+						dates = { 1:'1<sup>st</sup>', 2:'2<sup>nd</sup>', 3:'3<sup>rd</sup>', 4:'4<sup>th</sup>', 5:'5<sup>th</sup>', 6:'6<sup>th</sup>', 7:'7<sup>th</sup>', 8:'8<sup>th</sup>', 9:'9<sup>th</sup>', 10:'10<sup>th</sup>', 11:'11<sup>th</sup>', 12:'12<sup>th</sup>', 13:'13<sup>th</sup>', 14:'14<sup>th</sup>', 15:'15<sup>th</sup>', 16:'16<sup>th</sup>', 17:'17<sup>th</sup>', 18:'18<sup>th</sup>', 19:'19<sup>th</sup>', 20:'20<sup>th</sup>', 21:'21<sup>st</sup>', 22:'22<sup>nd</sup>', 23:'23<sup>rd</sup>', 24:'24<sup>th</sup>', 25:'25<sup>th</sup>', 26:'26<sup>th</sup>', 27:'27<sup>th</sup>', 28:'28<sup>th</sup>', 29:'29<sup>th</sup>', 30:'30<sup>th</sup>', 31:'31<sup>st</sup>' },
+						date = dates[now.getDate()],
+						year = now.getFullYear();
+						// curHour = now.getHours(),
+						// curMin = now.getMinutes();
+
+					$('#hourlyData').html("<i>"+weekday+", "+month+" "+date+", "+year+"<br/><i>"+"</i>");
+
+					// plusOne
+						var	plusOneHr = new Date().getHours()+1+":00",
+						plusOneTemp = json.hourly.data[1].apparentTemperature,
+						plusOneIcon = icons[json.hourly.data[1].icon],
+						plusOnePrecip = Math.round((json.hourly.data[1].precipProbability) * 100);
+
+						$('#plusOne').html(plusOneHr+'<br/>'+ Math.round(plusOneTemp)+ '&#176;F<br/>');
+						$('#precipOne').html('Rain:'+plusOnePrecip+'%');
+						$('#hour-one-icon').attr("data-icon",plusOneIcon);
+						
+					// plusTwo
+						var	plusTwoHr = new Date().getHours()+2+":00",
+						plusTwoTemp = json.hourly.data[2].apparentTemperature,
+						plusTwoIcon = icons[json.hourly.data[2].icon];
+						plusTwoPrecip = Math.round((json.hourly.data[2].precipProbability) * 100);
+
+						$('#plusTwo').html(plusTwoHr+'<br/>'+ Math.round(plusTwoTemp)+ '&#176;F<br/>');
+						$('#precipTwo').html('Rain:'+plusTwoPrecip+'%');
+						$('#hour-two-icon').attr("data-icon",plusTwoIcon);
+
+					// plusThree
+						var	plusThreeHr = new Date().getHours()+3+":00",
+						plusThreeTemp = json.hourly.data[3].apparentTemperature,
+						plusThreeIcon = icons[json.hourly.data[3].icon];
+						plusThreePrecip = Math.round((json.hourly.data[3].precipProbability) * 100);
+
+						$('#plusThree').html(plusThreeHr+'<br/>'+ Math.round(plusThreeTemp)+ '&#176;F<br/>');
+						$('#precipThree').html('Rain:'+plusThreePrecip+'%');
+						$('#hour-three-icon').attr("data-icon",plusThreeIcon);
+
+					// plusFour
+						var	plusFourHr = new Date().getHours()+4+":00",
+						plusFourTemp = json.hourly.data[4].apparentTemperature,
+						plusFourIcon = icons[json.hourly.data[4].icon];
+						plusFourPrecip = Math.round((json.hourly.data[4].precipProbability) * 100);
+
+						$('#plusFour').html(plusFourHr+'<br/>'+ Math.round(plusFourTemp)+ '&#176;F');
+						$('#precipFour').html('Rain:'+plusFourPrecip+'%');
+						$('#hour-four-icon').attr("data-icon",plusFourIcon);
+
+					// plusFive
+						var	plusFiveHr = new Date().getHours()+5+":00",
+						plusFiveTemp = json.hourly.data[5].apparentTemperature,
+						plusFiveIcon = icons[json.hourly.data[5].icon];
+						plusFivePrecip = Math.round((json.hourly.data[5].precipProbability) * 100);
+
+						$('#plusFive').html(plusFiveHr+'<br/>'+ Math.round(plusFiveTemp)+ '&#176;F');
+						$('#precipFive').html('Rain:'+plusFivePrecip+'%');
+						$('#hour-five-icon').attr("data-icon",plusFiveIcon);
+
+					// plusSix
+						var	plusSixHr = new Date().getHours()+6+":00",
+						plusSixTemp = json.hourly.data[6].apparentTemperature,
+						plusSixIcon = icons[json.hourly.data[6].icon];
+						plusSixPrecip = Math.round((json.hourly.data[6].precipProbability) * 100);
+
+						$('#plusSix').html(plusSixHr+'<br/>'+ Math.round(plusSixTemp)+ '&#176;F');
+						$('#precipSix').html('Rain:'+plusSixPrecip+'%');
+						$('#hour-six-icon').attr("data-icon",plusSixIcon);
+
+					// plusSeven
+						var	plusSevenHr = new Date().getHours()+7+":00",
+						plusSevenTemp = json.hourly.data[7].apparentTemperature,
+						plusSevenIcon = icons[json.hourly.data[7].icon];
+						plusSevenPrecip = Math.round((json.hourly.data[7].precipProbability) * 100);
+
+						$('#plusSeven').html(plusSevenHr+'<br/>'+ Math.round(plusSevenTemp)+ '&#176;F');
+						$('#precipSeven').html('Rain:'+plusSevenPrecip+'%');
+						$('#hour-seven-icon').attr("data-icon",plusSevenIcon);
+
+					// plusEight
+						var	plusEightHr = new Date().getHours()+8+":00",
+						plusEightTemp = json.hourly.data[8].apparentTemperature,
+						plusEightIcon = icons[json.hourly.data[8].icon];
+						plusEightPrecip = Math.round((json.hourly.data[8].precipProbability) * 100);
+						
+						$('#plusEight').html(plusEightHr+'<br/>'+ Math.round(plusEightTemp)+ '&#176;F');
+						$('#precipEight').html('Rain:'+plusEightPrecip+'%');
+						$('#hour-eight-icon').attr("data-icon",plusEightIcon);
+
+					// plusNine
+						var	plusNineHr = new Date().getHours()+9+":00",
+						plusNineTemp = json.hourly.data[9].apparentTemperature,
+						plusNineIcon = icons[json.hourly.data[9].icon];
+						plusNinePrecip = Math.round((json.hourly.data[9].precipProbability) * 100);
+
+						$('#plusNine').html(plusNineHr+'<br/>'+ Math.round(plusNineTemp)+ '&#176;F');
+						$('#precipNine').html('Rain:'+plusNinePrecip+'%');
+						$('#hour-nine-icon').attr("data-icon",plusNineIcon);
+
+					// plusTen
+						var	plusTenHr = new Date().getHours()+10+":00",
+						plusTenTemp = json.hourly.data[10].apparentTemperature,
+						plusTenIcon = icons[json.hourly.data[10].icon];
+						plusTenPrecip = Math.round((json.hourly.data[10].precipProbability) * 100);
+
+						$('#plusTen').html(plusTenHr+'<br/>'+ Math.round(plusTenTemp)+ '&#176;F');
+						$('#precipTen').html('Rain:'+plusTenPrecip+'%');
+						$('#hour-ten-icon').attr("data-icon",plusTenIcon);
+
+
+					console.log(json.hourly);
+
+				},
+				error: function(e) {
+					console.log(e.message);
+				}
+			});
+					// var timeout = setTimeout(loadWeather(cityCoords), 5000);
+		}
+
+		function loadCity(city) {
+			$("#location").html(city);
+
+			if (city.toLowerCase() == "current location") {
+				if ( navigator.geolocation )
+					navigator.geolocation.getCurrentPosition(loadWeather,loadDefaultCity);
+				else {
+						loadDefaultCity();
+					}
+			} else {
+				loadWeather(cities[city.toLowerCase()]);
+			}
+			loadWeather(cities[city.toLowerCase()]);
+
+		}
+
+		function loadDefaultCity() {
+			loadCity("Seattle");
+		}
+
+		$(document).ready(function(){
+			loadCity("Seattle");
+
+			$("a.city").bind("click",function(){
+				loadCity($(this).html());
+			});
+		});
+
+		</script>
+
+	</head>
+	<body onload="startTime()">
+
+	<div data-role="page">
+		<div data-role="panel" id="left-panel" data-theme="c">
+			<ul data-theme="d" data-role="listview">
+				<li data-icon="delete"><a href="#" data-rel="close">Close</a></li>
+				<li data-role="list-divider">Select a City</li>
+				<li><a href="#" class="city" data-rel="close">Current Location</a></li>
+				<li><a href="#" class="city" data-rel="close">Chicago</a></li>
+				<li><a href="#" class="city" data-rel="close">Los Angeles</a></li>
+				<li><a href="#" class="city" data-rel="close">Miami</a></li>
+				<li><a href="#" class="city" data-rel="close">New York</a></li>
+				<li><a href="#" class="city" data-rel="close">San Francisco</a></li>
+				<li><a href="#" class="city" data-rel="close">Seattle</a></li>
+				<li><a href="#" class="city" data-rel="close">Minneapolis</a></li>
+			</ul>
+		</div>
+
+		<div data-role="header" data-position="fixed" data-theme="c">
+			<h1>Q Weather</h1>
+			<a href="#left-panel" data-role="button" data-icon="bars" data-iconpos="notext" data-iconshadow="false">Menu</a>
+		</div>
+		<div data-role="content" class="content">
+			<h1 id="current_temp" class="icon main" data-icon="B"></h1>
+			<p id="current_summary">Partly Cloudy</p>
+			<h2 id="celc_temp"></h2>
+			<p id="location">Current Location</p>
+			<p id="hourlyData"></p>
+			<div id="currentTime"></div>
+			<div id="hourly" class="content" data-role="content">
+				<div class="hourHead"><h2>Hourly Forecast</h2></div>
+				<div id="hourlyBoxes">
+					<div id="hour-one-icon" class="icon icons" data-icon="Y"><br/><hr><span id="plusOne"></span><div id="precipOne"></div></div>
+					<div id="hour-two-icon" class="icon icons" data-icon="C"><br/><hr><span id="plusTwo"></span><div id="precipTwo"></div></div>
+					<div id="hour-three-icon" class="icon icons" data-icon="B"><br/><hr><span id="plusThree"></span><div id="precipThree"></div></div>
+					<div id="hour-four-icon" class="icon icons" data-icon="B"><br/><hr><span id="plusFour"></span><div id="precipFour"></div></div>
+					<div id="hour-five-icon" class="icon icons" data-icon="B"><br/><hr><span id="plusFive"></span><div id="precipFive"></div></div>
+					<div id="hour-six-icon" class="icon icons" data-icon="B"><br/><hr><span id="plusSix"></span><div id="precipSix"></div></div>
+					<div id="hour-seven-icon" class="icon icons" data-icon="B"><br/><hr><span id="plusSeven"></span><div id="precipSeven"></div></div>
+					<div id="hour-eight-icon" class="icon icons" data-icon="B"><br/><hr><span id="plusEight"></span><div id="precipEight"></div></div>
+					<div id="hour-nine-icon" class="icon icons" data-icon="B"><br/><hr><span id="plusNine"></span><div id="precipNine"></div></div>
+					<div id="hour-ten-icon" class="icon icons" data-icon="D"><br/><hr><span id="plusTen"></span><div id="precipTen"></div></div>
+				</div>
+			</div>
+		</div>
+	</div>
+<!-- 	<button style="display: block; position: fixed; right: 50px; top: 500px" onclick="getLocation()">Try It</button>
+ -->
+	<script>
+		
+
+		// Count seconds
+		function startTime() {
+		    var today = new Date();
+		    var h = today.getHours();
+		    var m = today.getMinutes();
+		    var s = today.getSeconds();
+		    m = checkTime(m);
+		    s = checkTime(s);
+		    document.getElementById('currentTime').innerHTML =
+		    h + ":" + m + ":" + s;
+		    var t = setTimeout(startTime, 500);
+		}
+		function checkTime(i) {
+		    if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
+		    return i;
+		}
+
+		// var x = document.getElementById("location");
+		// function showPosition(position) {
+		//     x.innerHTML = "Latitude: " + position.coords.latitude + 
+		//     "<br>Longitude: " + position.coords.longitude; 
+		// }
+	</script>
+	</body>
+</html>
